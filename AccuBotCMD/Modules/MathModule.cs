@@ -1,9 +1,4 @@
 ﻿using Discord.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AccuBotCMD.Modules
 {
@@ -11,7 +6,7 @@ namespace AccuBotCMD.Modules
     public class MathModule : ModuleBase<SocketCommandContext>
     {
         [Command("pi")]
-        public async Task Pi(int num)
+        public async Task Pi()
         {
             await Context.Channel.SendMessageAsync(Math.PI.ToString());
         }

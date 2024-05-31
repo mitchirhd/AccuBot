@@ -11,4 +11,14 @@
     <PackageReference Include="Discord.Net" Version="3.14.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AccuBotCMD\AccuBotCMD.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="token.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
