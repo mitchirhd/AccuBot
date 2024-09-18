@@ -1,11 +1,6 @@
 ﻿using Discord;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace AccuBot.Controller
+namespace AccuBotCore.Controller
 {
     public class ConsoleLogger
     {
