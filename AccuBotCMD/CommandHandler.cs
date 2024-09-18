@@ -37,5 +37,4 @@ namespace AccuBotCMD
             await _commands.ExecuteAsync(context, argPos, null);
         }
     }
-
 }
