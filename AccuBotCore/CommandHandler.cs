@@ -2,23 +2,25 @@
 using Discord.WebSocket;
 using System.Reflection;
 
-namespace AccuBotCMD
+namespace AccuBotCore
 {
     public class CommandHandler
     {
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
+        private readonly IServiceProvider _serviceProvider;
 
-        public CommandHandler(DiscordSocketClient client, CommandService commands)
+        public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider servicesProvider)
         {
             _commands = commands;
             _client = client;
+            _serviceProvider = servicesProvider;
         }
 
         public async Task InstallCommandsAsync()
         {
             _client.MessageReceived += HandleCommandAsync;
-            await _commands.AddModulesAsync(Assembly.GetExecutingAssembly(), null);
+            await _commands.AddModulesAsync(Assembly.GetExecutingAssembly(), _serviceProvider);
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)
@@ -34,7 +36,7 @@ namespace AccuBotCMD
                 return;
 
             var context = new SocketCommandContext(_client, message);
-            await _commands.ExecuteAsync(context, argPos, null);
+            await _commands.ExecuteAsync(context, argPos, _serviceProvider);
         }
     }
 }

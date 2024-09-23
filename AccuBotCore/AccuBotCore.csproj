@@ -6,12 +6,23 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+
   <ItemGroup>
+    <PackageReference Include="CliWrap" Version="3.6.6" />
     <PackageReference Include="Discord.Net" Version="3.16.0" />
+    <PackageReference Include="YoutubeExplode" Version="6.4.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AccuBotCMD\AccuBotCMD.csproj" />
+    <None Update="ffmpeg.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="libsodium.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="opus.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

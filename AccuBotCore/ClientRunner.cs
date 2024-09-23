@@ -1,8 +1,8 @@
-﻿using AccuBotCMD;
-using AccuBotCore.Controller;
+﻿using AccuBotCore.Controller;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AccuBotCore
 {
@@ -10,11 +10,13 @@ namespace AccuBotCore
     {
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commandService;
+        private readonly IServiceProvider _serviceProvider;
 
-        public ClientRunner(DiscordSocketClient client, CommandService cmdService) 
+        public ClientRunner(DiscordSocketClient client, CommandService cmdService, IServiceProvider serviceProvider) 
         {
             _client = client;
             _commandService = cmdService;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task Run()
@@ -26,7 +28,7 @@ namespace AccuBotCore
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
 
-            CommandHandler handler = new CommandHandler(_client, _commandService);
+            CommandHandler handler = _serviceProvider.GetRequiredService<CommandHandler>();
             await handler.InstallCommandsAsync();
 
             await Task.Delay(-1);
