@@ -65,7 +65,7 @@ namespace AccuBotCore.Jobs.Managers
             _jobMapping.Remove(audioChannel);
         }
 
-        public async Task<SongPlayerJob?> GetJob(IAudioChannel audioChannel, bool create = false, IMessageChannel ? textChannel = null)
+        public async Task<SongPlayerJob?> GetJob(IAudioChannel audioChannel, bool create = false, IMessageChannel? textChannel = null)
         {
             if (!_jobMapping.ContainsKey(audioChannel))
             {
@@ -75,7 +75,7 @@ namespace AccuBotCore.Jobs.Managers
                     throw new Exception("When creating a new entry for _jobMapping, a textChannel is needed");
 
                 var audioClient = await audioChannel.ConnectAsync();
-                var value = (audioClient, new SongPlayerJob(audioClient, _ytClient), textChannel);
+                var value = (audioClient, new SongPlayerJob(audioClient, textChannel, _ytClient), textChannel);
                 _jobMapping[audioChannel] = value;
                 value.Item2.PlayingSongEvent += OnPlayingSongEvent;
             }

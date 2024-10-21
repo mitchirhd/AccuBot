@@ -21,8 +21,8 @@ namespace AccuBotCore
 
         public async Task Run()
         {
-            _client.Log += ConsoleLogger.Log;
-            _commandService.Log += ConsoleLogger.Log;
+            _client.Log += Logger.LogAsync;
+            _commandService.Log += Logger.LogAsync;
             var token = File.ReadAllText("token.txt");
 
             await _client.LoginAsync(TokenType.Bot, token);

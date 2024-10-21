@@ -1,6 +1,8 @@
-﻿using AccuBotCore.Enum;
+﻿using AccuBotCore.Controller;
+using AccuBotCore.Enum;
 using AccuBotCore.Models;
 using CliWrap;
+using Discord;
 using Discord.Audio;
 using YoutubeExplode;
 using YoutubeExplode.Videos;
@@ -13,6 +15,7 @@ namespace AccuBotCore.Jobs
     public class SongPlayerJob : JobBase
     {
         private readonly IAudioClient _audioClient;
+        private readonly IMessageChannel _msgChannel;
         private List<Song> _songs = [];
         private List<Song> _songsPrio = [];
         private Task? _currentTask;
@@ -23,9 +26,10 @@ namespace AccuBotCore.Jobs
 
         public event PlayingSong? PlayingSongEvent;
 
-        public SongPlayerJob(IAudioClient audioClient, YoutubeClient ytClient) 
+        public SongPlayerJob(IAudioClient audioClient, IMessageChannel msgChannel, YoutubeClient ytClient) 
         {
             _audioClient = audioClient;
+            _msgChannel = msgChannel;
             _ytClient = ytClient;
         }
 
@@ -59,20 +63,32 @@ namespace AccuBotCore.Jobs
             if (_currentTask != null && !_currentTask.IsCompleted)
                 _currentTask.Wait();
 
-            _isPlaying = true;
-            _stopCurrent = false;
-
             _nowPlaying = prio ? _songsPrio.First() : _songs.First();
             string url = _nowPlaying.URL;
-            StreamManifest streamManifest = await _ytClient.Videos.Streams.GetManifestAsync(url);
-            IStreamInfo streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
-            Stream InputStream = await _ytClient.Videos.Streams.GetAsync(streamInfo);
-
+            Stream inputStream = Stream.Null;
+            try
+            {
+                StreamManifest streamManifest = await _ytClient.Videos.Streams.GetManifestAsync(url);
+                IStreamInfo streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+                inputStream = await _ytClient.Videos.Streams.GetAsync(streamInfo);
+            }
+            catch (Exception ex)
+            {
+                await _msgChannel.SendMessageAsync($"Could not get video information: {ex.Message}");
+                Logger.Log(new LogMessage(LogSeverity.Critical, "SongPlayerJob", "Error while requesting stream info", ex));
+                if(prio)
+                    _songsPrio.RemoveAt(0);
+                else
+                    _songs.RemoveAt(0);
+                return;
+            }
             MemoryStream memory = new MemoryStream();
             await Cli.Wrap("ffmpeg").WithArguments(" -hide_banner -loglevel panic -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1")
-                                    .WithStandardInputPipe(PipeSource.FromStream(InputStream))
+                                    .WithStandardInputPipe(PipeSource.FromStream(inputStream))
                                     .WithStandardOutputPipe(PipeTarget.ToStream(memory))
                                     .ExecuteAsync();
+            _isPlaying = true;
+            _stopCurrent = false;
             _currentTask = Task.Run(() =>
             {
                 if (prio)
