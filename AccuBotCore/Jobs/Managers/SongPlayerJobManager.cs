@@ -1,22 +1,22 @@
 ﻿using AccuBotCore.Factory;
+using AccuBotCore.Provider;
 using Discord;
 using Discord.Audio;
-using YoutubeExplode;
-using YoutubeExplode.Common;
-using YoutubeExplode.Videos;
 
 namespace AccuBotCore.Jobs.Managers
 {
     public class SongPlayerJobManager
     {
-        private Dictionary<IAudioChannel, (IAudioClient, SongPlayerJob, IMessageChannel)> _jobMapping = new Dictionary<IAudioChannel, (IAudioClient, SongPlayerJob, IMessageChannel)>();
-        private YoutubeClient _ytClient;
+        private Dictionary<IAudioChannel, (IAudioClient, SongPlayerJob)> _jobMapping = new Dictionary<IAudioChannel, (IAudioClient, SongPlayerJob)>();
+        private IYoutubeInfoProvider _youtubeInfoProvider;
         private SongFactory _songFactory;
+        private SongPlayerJobFactory _songPlayerJobFactory;
 
-        public SongPlayerJobManager(YoutubeClient youtubeClient, SongFactory songFactory) 
-        { 
-            _ytClient = youtubeClient;
+        public SongPlayerJobManager(IYoutubeInfoProvider youtubeInfoProvider, SongFactory songFactory, SongPlayerJobFactory songPlayerJobFactory)
+        {
             _songFactory = songFactory;
+            _songPlayerJobFactory = songPlayerJobFactory;
+            _youtubeInfoProvider = youtubeInfoProvider;
         }
 
         public async Task AddSong(IAudioChannel audioChannel, string url, IMessageChannel textChannel, bool prio = false)
@@ -37,7 +37,7 @@ namespace AccuBotCore.Jobs.Managers
             job = await GetJob(audioChannel, true, textChannel);
             if (url.Contains("playlist", StringComparison.InvariantCultureIgnoreCase))
             {
-                var videos = await _ytClient.Playlists.GetVideosAsync(url);
+                var videos = await _youtubeInfoProvider.GetPlaylistVideos(url);
                 foreach (var video in videos)
                 {
                     job?.AddSong(_songFactory.Create(video), prio);
@@ -46,7 +46,7 @@ namespace AccuBotCore.Jobs.Managers
             }
             else
             {
-                var video = await _ytClient.Videos.GetAsync(url);
+                var video = await _youtubeInfoProvider.GetVideoInfo(url);
                 job?.AddSong(_songFactory.Create(video), prio);
                 await textChannel.SendMessageAsync($"Added entry to queue");
             }
@@ -75,9 +75,9 @@ namespace AccuBotCore.Jobs.Managers
                     throw new Exception("When creating a new entry for _jobMapping, a textChannel is needed");
 
                 var audioClient = await audioChannel.ConnectAsync();
-                var value = (audioClient, new SongPlayerJob(audioClient, textChannel, _ytClient), textChannel);
+                var job = _songPlayerJobFactory.CreateSongPlayerJob(audioClient, textChannel);
+                var value = (audioClient, job);
                 _jobMapping[audioChannel] = value;
-                value.Item2.PlayingSongEvent += OnPlayingSongEvent;
             }
             return _jobMapping[audioChannel].Item2;
         }
@@ -85,12 +85,6 @@ namespace AccuBotCore.Jobs.Managers
         public bool HasJob(IAudioChannel channel)
         {
             return _jobMapping.Keys.Contains(channel);
-        }
-
-        private async void OnPlayingSongEvent(SongPlayerJob job, Video videoInfo)
-        {
-            var textChannel = _jobMapping.FirstOrDefault(kvp => kvp.Value.Item2 == job).Value.Item3;
-            await textChannel.SendMessageAsync($"Playing {Format.Bold(videoInfo.Title)}\n{videoInfo.Url}");
         }
     }
 }

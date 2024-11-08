@@ -1,11 +1,11 @@
 ﻿using AccuBotCore;
 using AccuBotCore.Factory;
 using AccuBotCore.Jobs.Managers;
+using AccuBotCore.Provider;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using YoutubeExplode;
 
 public class Program
 {
@@ -26,10 +26,11 @@ public class Program
             .AddSingleton<CommandHandler>()
             .AddSingleton<SongPlayerJobManager>()
             .AddSingleton<CommandService>()
-            .AddSingleton<YoutubeClient>()
             .AddSingleton<SongFactory>()
             .AddSingleton<QueueStringFactory>()
-            .AddSingleton<HelpStringFactory>();
+            .AddSingleton<HelpStringFactory>()
+            .AddSingleton<IYoutubeInfoProvider, YoutubeExplodeInfoProvider>()
+            .AddSingleton<SongPlayerJobFactory>();
 
         return collection.BuildServiceProvider();
     }

@@ -25,7 +25,7 @@ namespace AccuBotCore.Controller
                 File.Create(_logFilePath).Close();
 
             using var file = new StreamWriter(_logFileName, true);
-            file.WriteLine(msg);
+            file.WriteLine($"{DateTime.Now.Date.ToString("dd.MM.yyyy")} {msg.ToString()}");
         }
     }
 }
